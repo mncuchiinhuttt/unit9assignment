@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import ConnectionCheck from '$lib/components/connection-check.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 
 	let { children } = $props();
@@ -11,4 +12,5 @@
 	<main class="w-full pt-4">
 		{@render children()}
 	</main>
+	<ConnectionCheck />
 </Sidebar.Provider>
