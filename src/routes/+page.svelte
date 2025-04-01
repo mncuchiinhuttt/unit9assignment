@@ -5,6 +5,7 @@
     import * as Select from '$lib/components/ui/select/index.js';
     import { GoogleGenerativeAI } from "@google/generative-ai";
     import { env } from "$env/dynamic/public";
+    import { onMount } from "svelte";
 
     let studentName = $state('');
     let studentClass = $state('');
@@ -19,16 +20,28 @@
     let status = $state('idle'); 
     let saveStatus = $state(''); 
     let selectedModel = $state('');
+    let ai = $state<GoogleGenerativeAI | null>(null);
     const md = markdownit();
 
-    const ai = new GoogleGenerativeAI(env.PUBLIC_GOOGLE_API_KEY);
-    
     const models = [
         { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro Experimental' },
         { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking Experimental' },
         { id: 'gemini-2.0-flash-001', name: 'Gemini 2.0 Flash' },
         { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro' },
     ];
+
+    onMount(() => {
+        const savedKeys = localStorage.getItem("google_ai_api_keys");
+        const selectedKeyId = localStorage.getItem("selected_api_key_id");
+        
+        if (savedKeys && selectedKeyId) {
+            const apiKeys = JSON.parse(savedKeys);
+            const selectedKey = apiKeys.find((key: any) => key.id === selectedKeyId);
+            if (selectedKey) {
+                ai = new GoogleGenerativeAI(selectedKey.key);
+            }
+        }
+    });
 
     function handleFileSelect(event: Event) {
         const target = event.target as HTMLInputElement;
@@ -84,9 +97,19 @@
             return;
         }
 
+        if (!ai) {
+            errorMessage = 'Please configure your Google AI API key in Settings';
+            return;
+        }
+
+        if (!selectedModel) {
+            errorMessage = 'Please select an AI model';
+            return;
+        }
+
         try {
             status = 'evaluating';
-            const model = ai.getGenerativeModel({ model: selectedModel });
+            const model = ai!.getGenerativeModel({ model: selectedModel });
             const imagePart = await fileToGenerativePart(selectedFile);
             const fetchPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-prompt.txt');
             if (!fetchPrompt.ok) {
