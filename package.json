@@ -47,6 +47,7 @@
 	"pnpm": {
 		"onlyBuiltDependencies": [
 			"esbuild",
+			"sharp",
 			"sqlite3"
 		]
 	},
@@ -55,6 +56,7 @@
 		"class-variance-authority": "^0.7.1",
 		"lucide-svelte": "^0.486.0",
 		"markdown-it": "^14.1.0",
-		"shadcn-svelte": "^0.14.0"
+		"shadcn-svelte": "^0.14.0",
+		"sharp": "^0.33.5"
 	}
 }
