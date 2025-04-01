@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { model } from '$lib/index';
+    // import { model } from '$lib/index';
     import markdownit from 'markdown-it';
     import { saveEvaluation } from '$lib/db';
+    import * as Select from '$lib/components/ui/select/index.js';
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+    import { env } from "$env/dynamic/public";
 
     let studentName = $state('');
     let studentClass = $state('');
@@ -15,7 +18,17 @@
     let review = $state('');
     let status = $state('idle'); 
     let saveStatus = $state(''); 
+    let selectedModel = $state('');
     const md = markdownit();
+
+    const ai = new GoogleGenerativeAI(env.PUBLIC_GOOGLE_API_KEY);
+    
+    const models = [
+        { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro Experimental' },
+        { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking Experimental' },
+        { id: 'gemini-2.0-flash-001', name: 'Gemini 2.0 Flash' },
+        { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro' },
+    ];
 
     function handleFileSelect(event: Event) {
         const target = event.target as HTMLInputElement;
@@ -73,33 +86,22 @@
 
         try {
             status = 'evaluating';
+            const model = ai.getGenerativeModel({ model: selectedModel });
             const imagePart = await fileToGenerativePart(selectedFile);
-            const prompt = `Transcribe the handwritten text from the image. During transcription, please adhere to the following editing marks:
-- **Omit/Exclude:** Any words or phrases with a horizontal line drawn through them (strikethrough) should be ignored and not included in the output.
-- **Insert/Integrate:** Any words written above the main line of text should be identified as insertions and placed into the text at the correct location indicated by their position.
-- Do not include any other text in the output.
-- Do not correct any spelling or grammar.
-- Ignore any words that are not part of the essay.`;
+            const fetchPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-prompt.txt');
+            if (!fetchPrompt.ok) {
+                throw new Error('Failed to fetch prompt');
+            }
+            const prompt = (await fetchPrompt.text()).trim();
             const generatedContent = await model.generateContent([prompt, imagePart]);
             responseText = generatedContent.response.text();
-            const scoring_prompt = `You are a teacher grading a student's essay. Please grade the essay based on the following criteria:
-- Content: The essay should be well-written and contain relevant information.
-- Organization: The essay should be organized and easy to understand.
-- Grammar: The essay should be grammatically correct. (Less than 5 errors)
-- Style: The essay should be written in a clear and engaging style.
-- Word Count: The essay should be between ${minWordCount} and ${maxWordCount} words.
-If the essay is off-topic, please give a score under 1.5
-Else gave a score between 1.5 and 1.9
-If the essay is good, please give a score 2
-If the essay less than minimum word count, divide the score by 2
-The score get 1 decimal place
-Output the score in the format:
-Score: <score>
-Review: <review>
-The topic of the essay is: ${statement}
-The essay is: 
-${responseText}`
+            const fetchScoringPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-scoring-prompt.txt');
+            if (!fetchScoringPrompt.ok) {
+                throw new Error('Failed to fetch scoring prompt');
+            }
+            const scoring_prompt = (await fetchScoringPrompt.text()).trim();
             const generatedScore = await model.generateContent([scoring_prompt]);
+            console.log(generatedScore.response.text());
             score = parseFloat(generatedScore.response.text().split(':')[1].trim());
             review = generatedScore.response.text().split('Review:')[1].trim();
             status = 'finished';
@@ -201,6 +203,18 @@ ${responseText}`
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label for="model" class="block text-sm font-medium text-gray-700 mb-1">AI Model *</label>
+                    <Select.Root type="single" name="model" bind:value={selectedModel}>
+                        <Select.Trigger class="w-full">{models.find(m => m.id === selectedModel)?.name || 'Select a model'}</Select.Trigger>
+                        <Select.Content>
+                            {#each models as model}
+                                <Select.Item value={model.id}>{model.name}</Select.Item>
+                            {/each}
+                        </Select.Content>
+                    </Select.Root>
                 </div>
 
                 <div>
