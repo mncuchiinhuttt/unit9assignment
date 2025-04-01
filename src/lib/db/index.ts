@@ -15,33 +15,37 @@ export interface Evaluation {
     created_at: string;
 }
 
+export interface ApiKey {
+    id: string;
+    name: string;
+    key: string;
+    created_at: Date;
+}
+
 let db: IDBDatabase | null = null;
 
-async function initDB(): Promise<IDBDatabase | null> {
-    if (!browser) return null;
-
+async function initDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-        try {
-            if (typeof window === 'undefined') {
-                resolve(null);
-                return;
+        const request = indexedDB.open('unit9assignment', 2);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+
+        request.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+
+            if (!db.objectStoreNames.contains('evaluations')) {
+                const store = db.createObjectStore('evaluations', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('student_name', 'student_name', { unique: false });
+                store.createIndex('student_class', 'student_class', { unique: false });
+                store.createIndex('created_at', 'created_at', { unique: false });
             }
 
-            const request = window.indexedDB.open('evaluations', 1);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-
-            request.onupgradeneeded = (event) => {
-                const db = (event.target as IDBOpenDBRequest).result;
-                if (!db.objectStoreNames.contains('evaluations')) {
-                    const store = db.createObjectStore('evaluations', { keyPath: 'id', autoIncrement: true });
-                    store.createIndex('created_at', 'created_at', { unique: false });
-                }
-            };
-        } catch (error) {
-            resolve(null);
-        }
+            if (!db.objectStoreNames.contains('api_keys')) {
+                const store = db.createObjectStore('api_keys', { keyPath: 'id' });
+                store.createIndex('created_at', 'created_at', { unique: false });
+            }
+        };
     });
 }
 
@@ -118,6 +122,57 @@ export async function clearAllEvaluations(): Promise<void> {
 
     return new Promise((resolve, reject) => {
         const request = store.clear();
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+export async function saveApiKey(apiKey: Omit<ApiKey, 'created_at'>): Promise<void> {
+    if (!browser) return;
+
+    const db = await getDB();
+    if (!db) return;
+
+    const transaction = db.transaction(['api_keys'], 'readwrite');
+    const store = transaction.objectStore('api_keys');
+
+    return new Promise((resolve, reject) => {
+        const request = store.put({
+            ...apiKey,
+            created_at: new Date()
+        });
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+export async function getApiKeys(): Promise<ApiKey[]> {
+    if (!browser) return [];
+
+    const db = await getDB();
+    if (!db) return [];
+
+    const transaction = db.transaction(['api_keys'], 'readonly');
+    const store = transaction.objectStore('api_keys');
+
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+export async function deleteApiKey(id: string): Promise<void> {
+    if (!browser) return;
+
+    const db = await getDB();
+    if (!db) return;
+
+    const transaction = db.transaction(['api_keys'], 'readwrite');
+    const store = transaction.objectStore('api_keys');
+
+    return new Promise((resolve, reject) => {
+        const request = store.delete(id);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
     });

@@ -1,6 +1,6 @@
 <script lang="ts">
     import markdownit from 'markdown-it';
-    import { saveEvaluation } from '$lib/db';
+    import { saveEvaluation, getApiKeys, type ApiKey } from '$lib/db';
     import * as Select from '$lib/components/ui/select/index.js';
     import { GoogleGenerativeAI } from "@google/generative-ai";
     import { env } from "$env/dynamic/public";
@@ -33,13 +33,11 @@
         { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro' },
     ];
 
-    onMount(() => {
-        const savedKeys = localStorage.getItem("google_ai_api_keys");
-        const selectedKeyId = localStorage.getItem("selected_api_key_id");
-        
-        if (savedKeys && selectedKeyId) {
-            const apiKeys = JSON.parse(savedKeys);
-            const selectedKey = apiKeys.find((key: any) => key.id === selectedKeyId);
+    onMount(async () => {
+        const selectedKeyId = localStorage.getItem('selected_api_key_id');
+        if (selectedKeyId) {
+            const apiKeys = await getApiKeys();
+            const selectedKey = apiKeys.find(key => key.id === selectedKeyId);
             if (selectedKey) {
                 ai = new GoogleGenerativeAI(selectedKey.key);
             }
@@ -118,14 +116,14 @@
             if (!fetchPrompt.ok) {
                 throw new Error('Failed to fetch prompt');
             }
-            const prompt = (await fetchPrompt.text()).trim();
+            const prompt = await fetchPrompt.text();
             const generatedContent = await model.generateContent([prompt, imagePart]);
             responseText = generatedContent.response.text();
             const fetchScoringPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-scoring-prompt.txt');
             if (!fetchScoringPrompt.ok) {
                 throw new Error('Failed to fetch scoring prompt');
             }
-            const scoring_prompt = (await fetchScoringPrompt.text()).trim();
+            const scoring_prompt = await fetchScoringPrompt.text();
             const generatedScore = await model.generateContent([scoring_prompt]);
             console.log(generatedScore.response.text());
             score = parseFloat(generatedScore.response.text().split(':')[1].trim());
