@@ -53,6 +53,8 @@
 	},
 	"dependencies": {
 		"@google/generative-ai": "^0.24.0",
+		"@tauri-apps/api": "^2.4.0",
+		"app": "link:@tauri-apps/api/app",
 		"class-variance-authority": "^0.7.1",
 		"lucide-svelte": "^0.486.0",
 		"markdown-it": "^14.1.0",

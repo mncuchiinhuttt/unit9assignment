@@ -11,7 +11,7 @@
     let selectedFile: File | null = $state(null);
     let errorMessage = $state('');
     let responseText = $state('');
-    let score = $state(0);
+    let score = $state(-1);
     let review = $state('');
     let status = $state('idle'); 
     let saveStatus = $state(''); 
@@ -258,8 +258,8 @@ ${responseText}`
 
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-800 mb-3">Score</h3>
-                    <div class="text-4xl font-bold text-center" class:text-gray-500={score === 0} class:text-red-600={score < 1 && score !== 0} class:text-green-600={score >= 1}>
-                        {score === 0 ? '0.0' : score === 1 ? '1.0' : score === 2 ? '2.0' : score || '--'}/2.0
+                    <div class="text-4xl font-bold text-center" class:text-gray-500={score === -1} class:text-red-600={score < 1 && score !== -1} class:text-green-600={score >= 1}>
+                        {score === -1 ? '--' : score === 0 ? '0.0' : score === 1 ? '1.0' : score === 2 ? '2.0' : score || '--'}/2.0
                     </div>
                 </div>
 
