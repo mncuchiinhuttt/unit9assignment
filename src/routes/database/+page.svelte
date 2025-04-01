@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { getEvaluations, deleteEvaluation, type Evaluation } from '$lib/db';
+	import { getEvaluations, deleteEvaluation, clearAllEvaluations, type Evaluation } from '$lib/db';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "$lib/components/ui/table";
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import DeleteConfirmation from '$lib/components/delete-confirmation.svelte';
 	import EvaluationDetail from '$lib/components/evaluation-detail.svelte';
-	import { Download, Search, Trash2, Eye } from "@lucide/svelte";
+	import { Download, Search, Trash2, Eye, Trash } from "@lucide/svelte";
 	import * as XLSX from 'xlsx';
 	import { save } from '@tauri-apps/plugin-dialog';
 	import { writeFile } from '@tauri-apps/plugin-fs';
+	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '$lib/components/ui/dialog';
 
 	let evaluations = $state<Evaluation[]>([]);
 	let searchQuery = $state('');
@@ -22,6 +23,7 @@
 	let evaluationToDelete = $state<number | null>(null);
 	let detailDialogOpen = $state(false);
 	let selectedEvaluation = $state<Evaluation | null>(null);
+	let clearAllDialogOpen = $state(false);
 
 	async function loadEvaluations() {
 		try {
@@ -123,6 +125,17 @@
 		}
 	}
 
+	async function handleClearAll() {
+		try {
+			await clearAllEvaluations();
+			await loadEvaluations();
+			clearAllDialogOpen = false;
+		} catch (e) {
+			error = 'Failed to clear all evaluations';
+			console.error(e);
+		}
+	}
+
 	onMount(() => {
 		if (browser) {
 			loadEvaluations();
@@ -134,10 +147,16 @@
 	<div class="flex flex-col gap-4 w-full">
 		<div class="flex items-center justify-between">
 			<h1 class="text-2xl font-bold mr-auto">Evaluation Database</h1>
-			<Button onclick={exportToExcel} class="flex items-center gap-2">
-				<Download class="h-4 w-4" />
-				Export Excel
-			</Button>
+			<div class="flex items-center gap-2">
+				<Button variant="destructive" onclick={() => clearAllDialogOpen = true} class="flex items-center gap-2">
+					<Trash class="h-4 w-4" />
+					Clear All
+				</Button>
+				<Button onclick={exportToExcel} class="flex items-center gap-2">
+					<Download class="h-4 w-4" />
+					Export Excel
+				</Button>
+			</div>
 		</div>
 
 		<div class="flex flex-col gap-4 md:flex-row md:items-center">
@@ -241,6 +260,25 @@
 	evaluation={selectedEvaluation}
 	onClose={closeDetailDialog}
 />
+
+<Dialog bind:open={clearAllDialogOpen}>
+	<DialogContent>
+		<DialogHeader>
+			<DialogTitle>Clear All Evaluations</DialogTitle>
+			<DialogDescription>
+				Are you sure you want to delete all evaluations? This action cannot be undone.
+			</DialogDescription>
+		</DialogHeader>
+		<DialogFooter class="gap-2 sm:gap-0">
+			<Button variant="outline" onclick={() => clearAllDialogOpen = false}>
+				Cancel
+			</Button>
+			<Button variant="destructive" onclick={handleClearAll}>
+				Clear All
+			</Button>
+		</DialogFooter>
+	</DialogContent>
+</Dialog>
 
 <footer class="w-full border-t mt-auto py-4">
 	<div class="container mx-auto px-4">
