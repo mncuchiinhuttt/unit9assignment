@@ -6,6 +6,8 @@
     let studentName = $state('');
     let studentClass = $state('');
     let statement = $state('');
+    let minWordCount = $state(150);
+    let maxWordCount = $state(200);
     let selectedFile: File | null = $state(null);
     let errorMessage = $state('');
     let responseText = $state('');
@@ -64,6 +66,11 @@
             return;
         }
 
+        if (minWordCount > maxWordCount) {
+            errorMessage = 'Minimum word count cannot be greater than maximum word count';
+            return;
+        }
+
         try {
             status = 'evaluating';
             const imagePart = await fileToGenerativePart(selectedFile);
@@ -78,10 +85,13 @@
             const scoring_prompt = `You are a teacher grading a student's essay. Please grade the essay based on the following criteria:
 - Content: The essay should be well-written and contain relevant information.
 - Organization: The essay should be organized and easy to understand.
-- Grammar: The essay should be grammatically correct.
+- Grammar: The essay should be grammatically correct. (Less than 5 errors)
 - Style: The essay should be written in a clear and engaging style.
-If the essay is out of topic, please give a score under 1.5
-Else gave a score between 1.5 and 2
+- Word Count: The essay should be between ${minWordCount} and ${maxWordCount} words. (Minus 0.2 if the word count is different from 25% of the word count in the essay)
+If the essay is off-topic, please give a score under 1.5
+Else gave a score between 1.5 and 1.9
+If the essay is good, please give a score 2
+The score get 1 decimal place
 Output the score in the format:
 Score: <score>
 Review: <review>
@@ -89,7 +99,7 @@ The topic of the essay is: ${statement}
 The essay is: 
 ${responseText}`
             const generatedScore = await model.generateContent([scoring_prompt]);
-            score = parseInt(generatedScore.response.text().split(':')[1].trim());
+            score = parseFloat(generatedScore.response.text().split(':')[1].trim());
             review = generatedScore.response.text().split('Review:')[1].trim();
             status = 'finished';
         } catch (error) {
@@ -165,6 +175,31 @@ ${responseText}`
                         rows="3"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     ></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="minWordCount" class="block text-sm font-medium text-gray-700 mb-1">Minimum Word Count *</label>
+                        <input 
+                            type="number" 
+                            id="minWordCount" 
+                            bind:value={minWordCount} 
+                            min="1"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label for="maxWordCount" class="block text-sm font-medium text-gray-700 mb-1">Maximum Word Count *</label>
+                        <input 
+                            type="number" 
+                            id="maxWordCount" 
+                            bind:value={maxWordCount} 
+                            min="1"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
                 </div>
 
                 <div>

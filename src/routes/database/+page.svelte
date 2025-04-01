@@ -5,7 +5,9 @@
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "$lib/components/ui/table";
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Download, Search, Trash2 } from "@lucide/svelte";
+	import DeleteConfirmation from '$lib/components/delete-confirmation.svelte';
+	import EvaluationDetail from '$lib/components/evaluation-detail.svelte';
+	import { Download, Search, Trash2, Eye } from "@lucide/svelte";
 
 	let evaluations = $state<Evaluation[]>([]);
 	let searchQuery = $state('');
@@ -13,6 +15,10 @@
 	let classList = $state<string[]>([]);
 	let isLoading = $state(true);
 	let error = $state('');
+	let deleteDialogOpen = $state(false);
+	let evaluationToDelete = $state<number | null>(null);
+	let detailDialogOpen = $state(false);
+	let selectedEvaluation = $state<Evaluation | null>(null);
 
 	async function loadEvaluations() {
 		try {
@@ -28,7 +34,6 @@
 		}
 	}
 
-	// Filter evaluations based on search and class
 	let filteredEvaluations = $derived(evaluations.filter((evaluation) => {
 		const matchesSearch = 
 			evaluation.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -41,7 +46,6 @@
 		return matchesSearch && matchesClass;
 	}));
 
-	// Export to CSV
 	function exportToCSV() {
 		const headers = ['Student Name', 'Class', 'Statement', 'Essay Text', 'Score', 'Review', 'Created At'];
 		const csvContent = [
@@ -64,20 +68,39 @@
 		link.click();
 	}
 
-	// Delete evaluation
-	async function handleDelete(id: number) {
-		if (!confirm('Are you sure you want to delete this evaluation?')) return;
+	function openDeleteDialog(id: number) {
+		evaluationToDelete = id;
+		deleteDialogOpen = true;
+	}
+
+	function closeDeleteDialog() {
+		deleteDialogOpen = false;
+		evaluationToDelete = null;
+	}
+
+	function openDetailDialog(evaluation: Evaluation) {
+		selectedEvaluation = evaluation;
+		detailDialogOpen = true;
+	}
+
+	function closeDetailDialog() {
+		detailDialogOpen = false;
+		selectedEvaluation = null;
+	}
+
+	async function handleDelete() {
+		if (!evaluationToDelete) return;
 		
 		try {
-			await deleteEvaluation(id);
-			await loadEvaluations(); // Reload after deletion
+			await deleteEvaluation(evaluationToDelete);
+			await loadEvaluations();
+			closeDeleteDialog();
 		} catch (e) {
 			error = 'Failed to delete evaluation';
 			console.error(e);
 		}
 	}
 
-	// Load evaluations on mount
 	onMount(() => {
 		if (browser) {
 			loadEvaluations();
@@ -143,18 +166,32 @@
 								<TableCell>{evaluation.student_class}</TableCell>
 								<TableCell class="max-w-[200px] truncate">{evaluation.statement}</TableCell>
 								<TableCell class="max-w-[200px] truncate">{evaluation.essay_text}</TableCell>
-								<TableCell>{evaluation.score}</TableCell>
+								{#if evaluation.score < 1.0}
+									<TableCell class="text-red-600">{evaluation.score}</TableCell>
+								{:else}
+									<TableCell class="text-green-600">{evaluation.score}</TableCell>
+								{/if}
 								<TableCell class="max-w-[200px] truncate">{evaluation.review}</TableCell>
 								<TableCell>{new Date(evaluation.created_at).toLocaleDateString()}</TableCell>
 								<TableCell>
-									<Button
-										variant="ghost"
-										size="icon"
-										onclick={() => handleDelete(evaluation.id)}
-										class="h-8 w-8"
-									>
-										<Trash2 class="h-4 w-4" />
-									</Button>
+									<div class="flex items-center gap-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											onclick={() => openDetailDialog(evaluation)}
+											class="h-8 w-8"
+										>
+											<Eye class="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											onclick={() => openDeleteDialog(evaluation.id)}
+											class="h-8 w-8"
+										>
+											<Trash2 class="h-4 w-4" />
+										</Button>
+									</div>
 								</TableCell>
 							</TableRow>
 						{/each}
@@ -164,6 +201,19 @@
 		{/if}
 	</div>
 </div>
+
+<DeleteConfirmation 
+	open={deleteDialogOpen}
+	onConfirm={handleDelete}
+	onCancel={closeDeleteDialog}
+/>
+
+<EvaluationDetail
+	open={detailDialogOpen}
+	evaluation={selectedEvaluation}
+	onClose={closeDetailDialog}
+/>
+
 <footer class="w-full border-t mt-auto py-4">
 	<div class="container mx-auto px-4">
 		<div class="text-sm text-muted-foreground text-center">
