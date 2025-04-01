@@ -3,7 +3,7 @@
     import { Button } from '$lib/components/ui/button';
     import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '$lib/components/ui/dialog';
     
-    const CURRENT_VERSION = '1.0.1';
+    const CURRENT_VERSION = '1.0.2';
 
     let showDialog = $state(false);
     let latestVersion = $state('');
