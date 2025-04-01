@@ -1,77 +1,79 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Plus, Trash2 } from "@lucide/svelte";
-    import { onMount } from "svelte";
+    import { onMount } from 'svelte';
+    import Button from '$lib/components/ui/button/button.svelte';
+    import Input from '$lib/components/ui/input/input.svelte';
+    import Label from '$lib/components/ui/label/label.svelte';
+    import { saveApiKey, getApiKeys, deleteApiKey, type ApiKey } from '$lib/db';
+    import { Trash2 } from '@lucide/svelte';
 
-    interface ApiKey {
-        id: string;
-        name: string;
-        key: string;
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
     }
 
     let apiKeys = $state<ApiKey[]>([]);
-    let selectedKeyId = $state<string>("");
-    let newKeyName = $state("");
-    let newKeyValue = $state("");
-    let errorMessage = $state("");
+    let selectedKeyId = $state<string | null>(null);
+    let newKeyName = $state('');
+    let newKeyValue = $state('');
+    let error = $state('');
 
-    onMount(() => {
-        // Load saved API keys from localStorage
-        const savedKeys = localStorage.getItem("google_ai_api_keys");
-        if (savedKeys) {
-            apiKeys = JSON.parse(savedKeys);
-            // Set the first key as selected if none is selected
-            if (!selectedKeyId && apiKeys.length > 0) {
-                selectedKeyId = apiKeys[0].id;
-            }
+    onMount(async () => {
+        await loadApiKeys();
+        const savedSelectedKeyId = localStorage.getItem('selected_api_key_id');
+        if (savedSelectedKeyId) {
+            selectedKeyId = savedSelectedKeyId;
         }
     });
 
-    function generateId() {
-        return Math.random().toString(36).substring(2, 15);
+    async function loadApiKeys() {
+        try {
+            apiKeys = await getApiKeys();
+        } catch (e) {
+            error = 'Failed to load API keys';
+            console.error(e);
+        }
     }
 
-    function addApiKey() {
+    async function handleAddKey() {
         if (!newKeyName || !newKeyValue) {
-            errorMessage = "Please fill in both name and API key";
+            error = 'Please fill in all fields';
             return;
         }
 
-        const newKey: ApiKey = {
-            id: generateId(),
-            name: newKeyName,
-            key: newKeyValue
-        };
-
-        apiKeys = [...apiKeys, newKey];
-        localStorage.setItem("google_ai_api_keys", JSON.stringify(apiKeys));
-        
-        // Clear form
-        newKeyName = "";
-        newKeyValue = "";
-        errorMessage = "";
-
-        // Select the new key if it's the first one
-        if (!selectedKeyId) {
-            selectedKeyId = newKey.id;
+        try {
+            const newKey: Omit<ApiKey, 'created_at'> = {
+                id: generateId(),
+                name: newKeyName,
+                key: newKeyValue
+            };
+            await saveApiKey(newKey);
+            await loadApiKeys();
+            newKeyName = '';
+            newKeyValue = '';
+            error = '';
+        } catch (e) {
+            error = 'Failed to save API key';
+            console.error(e);
         }
     }
 
-    function deleteApiKey(id: string) {
-        apiKeys = apiKeys.filter(key => key.id !== id);
-        localStorage.setItem("google_ai_api_keys", JSON.stringify(apiKeys));
-        
-        // Select another key if the deleted one was selected
-        if (selectedKeyId === id && apiKeys.length > 0) {
-            selectedKeyId = apiKeys[0].id;
+    async function handleDeleteKey(id: string) {
+        try {
+            await deleteApiKey(id);
+            await loadApiKeys();
+            if (selectedKeyId === id) {
+                selectedKeyId = null;
+                localStorage.removeItem('selected_api_key_id');
+            }
+            error = '';
+        } catch (e) {
+            error = 'Failed to delete API key';
+            console.error(e);
         }
     }
 
-    function selectApiKey(id: string) {
+    function handleSelectKey(id: string) {
         selectedKeyId = id;
-        localStorage.setItem("selected_api_key_id", id);
+        localStorage.setItem('selected_api_key_id', id);
     }
 </script>
 
@@ -81,73 +83,68 @@
 
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-2xl font-semibold mb-6">Google AI API Keys</h2>
-            <p class="text-sm text-muted-foreground mb-6">
-                Add your Google AI API keys to use the AI model. <a href="https://aistudio.google.com/apikey" target="_blank" class="text-blue-500 hover:text-blue-600">Click here</a> to get your API key.
-            </p>
             
-            <div class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label for="keyName">Key Name</Label>
-                        <Input 
-                            id="keyName" 
-                            bind:value={newKeyName} 
-                            placeholder="e.g., Production Key"
-                            class="mt-1"
-                        />
-                    </div>
-                    <div>
-                        <Label for="keyValue">API Key</Label>
-                        <Input 
-                            id="keyValue" 
-                            type="password"
-                            bind:value={newKeyValue} 
-                            placeholder="Enter your API key"
-                            class="mt-1"
-                        />
-                    </div>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <Label for="keyName">Key Name</Label>
+                    <Input 
+                        class="mt-1"
+                        id="keyName" 
+                        bind:value={newKeyName} 
+                        placeholder="Enter a name for this API key"
+                    />
                 </div>
 
-                {#if errorMessage}
-                    <p class="text-red-600 text-sm">{errorMessage}</p>
+                <div>
+                    <Label for="keyValue">API Key</Label>
+                    <Input 
+                        class="mt-1"
+                        id="keyValue" 
+                        type="password"
+                        bind:value={newKeyValue} 
+                        placeholder="Enter your Google AI API key"
+                    />
+                </div>
+
+                {#if error}
+                    <p class="text-red-600 text-sm">{error}</p>
                 {/if}
+            </div>
 
-                <Button onclick={addApiKey} class="gap-2">
-                    <Plus class="h-4 w-4" />
-                    Add API Key
-                </Button>
+            <Button onclick={handleAddKey} class="w-full mt-4">
+                Add API Key
+            </Button>
+        </div>
 
-                {#if apiKeys.length > 0}
-                    <div class="mt-8">
-                        <h3 class="text-lg font-medium mb-4">Saved API Keys</h3>
-                        <div class="space-y-4">
-                            {#each apiKeys as key}
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                    <div class="flex items-center gap-4">
-                                        <input 
-                                            type="radio" 
-                                            id={key.id} 
-                                            name="selectedKey" 
-                                            value={key.id}
-                                            checked={selectedKeyId === key.id}
-                                            onchange={() => selectApiKey(key.id)}
-                                            class="h-4 w-4 text-blue-600"
-                                        />
-                                        <label for={key.id} class="font-medium">{key.name}</label>
-                                    </div>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon"
-                                        onclick={() => deleteApiKey(key.id)}
-                                        class="text-red-600 hover:text-red-700"
-                                    >
-                                        <Trash2 class="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            {/each}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-6">Saved API Keys</h2>
+            
+            <div class="space-y-4">
+                {#each apiKeys as key}
+                    <div class="flex items-center justify-between p-4 border rounded-lg">
+                        <div class="flex items-center gap-4">
+                            <input 
+                                type="radio" 
+                                id={key.id} 
+                                name="selectedKey" 
+                                checked={selectedKeyId === key.id}
+                                onchange={() => handleSelectKey(key.id)}
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                            <label for={key.id} class="text-sm font-medium text-gray-700">
+                                {key.name}
+                            </label>
                         </div>
+                        <button 
+                            onclick={() => handleDeleteKey(key.id)}
+                            class="text-red-600 hover:text-red-800"
+                        >
+                            <Trash2 class="h-5 w-5" />
+                        </button>
                     </div>
-                {/if}
+                {:else}
+                    <p class="text-gray-500 text-center py-4">No API keys saved yet</p>
+                {/each}
             </div>
         </div>
     </div>
