@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import { TableProperties, Home, Info } from "@lucide/svelte";
+  import { TableProperties, Home, Info, Settings } from "@lucide/svelte";
 
   const items = [
     {
@@ -17,6 +17,11 @@
       title: "About",
       icon: Info,
       href: "/about"
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      href: "/settings"
     }
   ]
 </script>
