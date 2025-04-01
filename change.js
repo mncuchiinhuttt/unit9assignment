@@ -5,9 +5,7 @@ import sharp from 'sharp';
 const pngFiles = [
   '32x32.png',
   '128x128.png',
-  '128x128@2x.png',
-  'icon.ico',
-  'icon.icns'
+  '128x128@2x.png'
 ];
 
 // Convert each PNG file from RGB to RGBA

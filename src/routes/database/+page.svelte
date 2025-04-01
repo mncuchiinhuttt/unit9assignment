@@ -167,9 +167,15 @@
 								<TableCell class="max-w-[200px] truncate">{evaluation.statement}</TableCell>
 								<TableCell class="max-w-[200px] truncate">{evaluation.essay_text}</TableCell>
 								{#if evaluation.score < 1.0}
-									<TableCell class="text-red-600">{evaluation.score}</TableCell>
+									<TableCell class="text-red-600">
+										{evaluation.score === 0 ? '0.0' : evaluation.score}
+									</TableCell>
 								{:else}
-									<TableCell class="text-green-600">{evaluation.score}</TableCell>
+									<TableCell class="text-green-600">
+										{evaluation.score === 1 ? '1.0' : 
+										 evaluation.score === 2 ? '2.0' : 
+										 evaluation.score}
+									</TableCell>
 								{/if}
 								<TableCell class="max-w-[200px] truncate">{evaluation.review}</TableCell>
 								<TableCell>{new Date(evaluation.created_at).toLocaleDateString()}</TableCell>

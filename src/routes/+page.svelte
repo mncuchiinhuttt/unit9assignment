@@ -87,10 +87,11 @@
 - Organization: The essay should be organized and easy to understand.
 - Grammar: The essay should be grammatically correct. (Less than 5 errors)
 - Style: The essay should be written in a clear and engaging style.
-- Word Count: The essay should be between ${minWordCount} and ${maxWordCount} words. (Minus 0.2 if the word count is different from 25% of the word count in the essay)
+- Word Count: The essay should be between ${minWordCount} and ${maxWordCount} words.
 If the essay is off-topic, please give a score under 1.5
 Else gave a score between 1.5 and 1.9
 If the essay is good, please give a score 2
+If the essay less than minimum word count, divide the score by 2
 The score get 1 decimal place
 Output the score in the format:
 Score: <score>
@@ -258,7 +259,7 @@ ${responseText}`
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-800 mb-3">Score</h3>
                     <div class="text-4xl font-bold text-center" class:text-gray-500={score === 0} class:text-red-600={score < 1 && score !== 0} class:text-green-600={score >= 1}>
-                        {score || '--'}/2.0
+                        {score === 0 ? '0.0' : score === 1 ? '1.0' : score === 2 ? '2.0' : score || '--'}/2.0
                     </div>
                 </div>
 
