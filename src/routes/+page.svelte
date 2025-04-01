@@ -1,11 +1,13 @@
 <script lang="ts">
-    // import { model } from '$lib/index';
     import markdownit from 'markdown-it';
     import { saveEvaluation } from '$lib/db';
     import * as Select from '$lib/components/ui/select/index.js';
     import { GoogleGenerativeAI } from "@google/generative-ai";
     import { env } from "$env/dynamic/public";
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '$lib/components/ui/dialog';
+    import Button from '$lib/components/ui/button/button.svelte';
 
     let studentName = $state('');
     let studentClass = $state('');
@@ -21,6 +23,7 @@
     let saveStatus = $state(''); 
     let selectedModel = $state('');
     let ai = $state<GoogleGenerativeAI | null>(null);
+    let showApiKeyDialog = $state(false);
     const md = markdownit();
 
     const models = [
@@ -98,7 +101,7 @@
         }
 
         if (!ai) {
-            errorMessage = 'Please configure your Google AI API key in Settings';
+            showApiKeyDialog = true;
             return;
         }
 
@@ -255,13 +258,9 @@
                     <p class="text-red-600 bg-red-50 p-3 rounded-md text-sm">{errorMessage}</p>
                 {/if}
 
-                <button 
-                    onclick={handleSubmit} 
-                    disabled={!selectedFile || !studentName || !studentClass || !statement || status === 'evaluating'} 
-                    class="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
-                >
+                <Button class="w-full py-3 px-4" onclick={handleSubmit} disabled={!selectedFile || !studentName || !studentClass || !statement || status === 'evaluating'}>
                     {status === 'evaluating' ? 'Evaluating...' : 'Evaluate Essay'}
-                </button>
+                </Button>
             </div>
         </div>
 
@@ -345,3 +344,23 @@
 		</div>
 	</div>
 </footer>
+
+<Dialog bind:open={showApiKeyDialog}>
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>API Key Required</DialogTitle>
+            <DialogDescription>
+                You need to configure your Google AI API key before you can evaluate essays. Would you like to configure it now?
+            </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+            <Button class="px-4 py-2" onclick={() => {
+                showApiKeyDialog = false;
+                goto('/settings');
+            }}>
+                Configure API Key
+            </Button>
+            <Button variant="secondary" class="px-4 py-2" onclick={() => showApiKeyDialog = false}>Cancel</Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>

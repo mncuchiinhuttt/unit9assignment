@@ -105,4 +105,20 @@ export async function deleteEvaluation(id: number): Promise<void> {
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
     });
+}
+
+export async function clearAllEvaluations(): Promise<void> {
+    if (!browser) return;
+
+    const db = await getDB();
+    if (!db) return;
+
+    const transaction = db.transaction(['evaluations'], 'readwrite');
+    const store = transaction.objectStore('evaluations');
+
+    return new Promise((resolve, reject) => {
+        const request = store.clear();
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
 } 
