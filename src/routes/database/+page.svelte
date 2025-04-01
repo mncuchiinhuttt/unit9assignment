@@ -8,6 +8,9 @@
 	import DeleteConfirmation from '$lib/components/delete-confirmation.svelte';
 	import EvaluationDetail from '$lib/components/evaluation-detail.svelte';
 	import { Download, Search, Trash2, Eye } from "@lucide/svelte";
+	import * as XLSX from 'xlsx';
+	import { save } from '@tauri-apps/plugin-dialog';
+	import { writeFile } from '@tauri-apps/plugin-fs';
 
 	let evaluations = $state<Evaluation[]>([]);
 	let searchQuery = $state('');
@@ -46,26 +49,45 @@
 		return matchesSearch && matchesClass;
 	}));
 
-	function exportToCSV() {
-		const headers = ['Student Name', 'Class', 'Statement', 'Essay Text', 'Score', 'Review', 'Created At'];
-		const csvContent = [
-			headers.join(','),
-			...filteredEvaluations.map((e) => [
-				`"${e.student_name}"`,
-				`"${e.student_class}"`,
-				`"${e.statement.replace(/"/g, '""')}"`,
-				`"${e.essay_text.replace(/"/g, '""')}"`,
-				e.score,
-				`"${e.review.replace(/"/g, '""')}"`,
-				`"${e.created_at}"`
-			].join(','))
-		].join('\n');
+	async function exportToExcel() {
+		try {
+			const wb = XLSX.utils.book_new();
+			const ws = XLSX.utils.json_to_sheet(
+				filteredEvaluations.map((e) => ({
+					'Student Name': e.student_name,
+					'Class': e.student_class,
+					'Statement': e.statement,
+					'Score': e.score,
+					'Created At': new Date(e.created_at).toLocaleString(),
+				}))
+			);
 
-		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-		const link = document.createElement('a');
-		link.href = URL.createObjectURL(blob);
-		link.download = `evaluations_${new Date().toISOString().split('T')[0]}.csv`;
-		link.click();
+			XLSX.utils.book_append_sheet(wb, ws, 'Evaluations');
+
+			const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+			const today = new Date();
+			const dateStr = today.toISOString().split('T')[0];
+			const defaultPath = `evaluations_${dateStr}.xlsx`;
+
+			const filePath = await save({
+				defaultPath,
+				filters: [
+					{
+						name: 'Excel',
+						extensions: ['xlsx']
+					}
+				]
+			});
+
+			if (filePath) {
+				await writeFile(filePath, excelBuffer);
+				alert('Export completed successfully!');
+			}
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Failed to export data. Please try again.');
+		}
 	}
 
 	function openDeleteDialog(id: number) {
@@ -112,9 +134,9 @@
 	<div class="flex flex-col gap-4 w-full">
 		<div class="flex items-center justify-between">
 			<h1 class="text-2xl font-bold mr-auto">Evaluation Database</h1>
-			<Button onclick={exportToCSV} class="flex items-center gap-2">
+			<Button onclick={exportToExcel} class="flex items-center gap-2">
 				<Download class="h-4 w-4" />
-				Export CSV
+				Export Excel
 			</Button>
 		</div>
 

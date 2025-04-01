@@ -62,7 +62,7 @@
                 <div class="space-y-4">
                     <div>
                         <h3 class="text-lg font-medium">Current Version</h3>
-                        <p class="text-muted-foreground mt-2">1.0.0 (April 2025)</p>
+                        <p class="text-muted-foreground mt-2">1.0.1 (April 2025)</p>
                     </div>
                     <div>
                         <h3 class="text-lg font-medium">License</h3>

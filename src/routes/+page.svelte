@@ -74,18 +74,31 @@
         try {
             status = 'evaluating';
             const imagePart = await fileToGenerativePart(selectedFile);
-            const fetchPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-prompt.txt');
-            if (!fetchPrompt.ok) {
-                throw new Error('Failed to fetch prompt');
-            }
-            const prompt = (await fetchPrompt.text()).trim();
+            const prompt = `Transcribe the handwritten text from the image. During transcription, please adhere to the following editing marks:
+- **Omit/Exclude:** Any words or phrases with a horizontal line drawn through them (strikethrough) should be ignored and not included in the output.
+- **Insert/Integrate:** Any words written above the main line of text should be identified as insertions and placed into the text at the correct location indicated by their position.
+- Do not include any other text in the output.
+- Do not correct any spelling or grammar.
+- Ignore any words that are not part of the essay.`;
             const generatedContent = await model.generateContent([prompt, imagePart]);
             responseText = generatedContent.response.text();
-            const fetchScoringPrompt = await fetch('https://cdn.mncuchiinhuttt.dev/unit9assignment-scoring-prompt.txt');
-            if (!fetchScoringPrompt.ok) {
-                throw new Error('Failed to fetch scoring prompt');
-            }
-            const scoring_prompt = (await fetchScoringPrompt.text()).trim();
+            const scoring_prompt = `You are a teacher grading a student's essay. Please grade the essay based on the following criteria:
+- Content: The essay should be well-written and contain relevant information.
+- Organization: The essay should be organized and easy to understand.
+- Grammar: The essay should be grammatically correct. (Less than 5 errors)
+- Style: The essay should be written in a clear and engaging style.
+- Word Count: The essay should be between ${minWordCount} and ${maxWordCount} words.
+If the essay is off-topic, please give a score under 1.5
+Else gave a score between 1.5 and 1.9
+If the essay is good, please give a score 2
+If the essay less than minimum word count, divide the score by 2
+The score get 1 decimal place
+Output the score in the format:
+Score: <score>
+Review: <review>
+The topic of the essay is: ${statement}
+The essay is: 
+${responseText}`
             const generatedScore = await model.generateContent([scoring_prompt]);
             score = parseFloat(generatedScore.response.text().split(':')[1].trim());
             review = generatedScore.response.text().split('Review:')[1].trim();
