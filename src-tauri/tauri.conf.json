@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Gay",
+        "title": "Student Essay Evaluation System",
         "width": 1300,
         "height": 930,
         "resizable": true,
