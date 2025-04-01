@@ -16,6 +16,12 @@
         window.location.reload();
     }
 
+    function preventClose(e: Event) {
+        if (!isOnline) {
+            e.preventDefault();
+        }
+    }
+
     onMount(() => {
         checkConnection();
         window.addEventListener('online', checkConnection);
@@ -28,8 +34,18 @@
     });
 </script>
 
-<Dialog bind:open={showDialog}>
-    <DialogContent>
+<Dialog 
+    bind:open={showDialog} 
+    onOpenChange={(isOpen) => {
+        if (!isOnline && !isOpen) {
+            showDialog = true;
+        }
+    }}
+>
+    <DialogContent 
+        onEscapeKeyDown={preventClose}
+        onInteractOutside={preventClose}
+    >
         <DialogHeader>
             <DialogTitle>No Internet Connection</DialogTitle>
             <DialogDescription>
@@ -43,4 +59,4 @@
             </Button>
         </div>
     </DialogContent>
-</Dialog> 
+</Dialog>
