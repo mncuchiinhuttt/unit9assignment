@@ -8,7 +8,7 @@
 
 <Sidebar.Provider>
 	<AppSidebar />
-	<main>
+	<main class="w-full pt-4">
 		{@render children()}
 	</main>
 </Sidebar.Provider>

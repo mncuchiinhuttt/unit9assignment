@@ -85,10 +85,10 @@
 	});
 </script>
 
-<div class="container mx-auto py-8">
-	<div class="flex flex-col gap-4">
+<div class="container mx-auto py-8 w-full">
+	<div class="flex flex-col gap-4 w-full">
 		<div class="flex items-center justify-between">
-			<h1 class="text-2xl font-bold">Evaluation Database</h1>
+			<h1 class="text-2xl font-bold mr-auto">Evaluation Database</h1>
 			<Button onclick={exportToCSV} class="flex items-center gap-2">
 				<Download class="h-4 w-4" />
 				Export CSV
@@ -164,3 +164,12 @@
 		{/if}
 	</div>
 </div>
+<footer class="w-full border-t mt-auto py-4">
+	<div class="container mx-auto px-4">
+		<div class="text-sm text-muted-foreground text-center">
+			<p>Developed by <a href="https://github.com/mncuchiinhuttt">Vo Minh Long</a></p>
+			<p>© 2025 Unit 9 Assignment. All rights reserved.</p>
+            <p>Source code: <a href="https://github.com/mncuchiinhuttt/unit9assignment/">GitHub</a></p>
+		</div>
+	</div>
+</footer>

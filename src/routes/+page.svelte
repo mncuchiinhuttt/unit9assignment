@@ -75,8 +75,22 @@
 - Ignore any words that are not part of the essay.`;
             const generatedContent = await model.generateContent([prompt, imagePart]);
             responseText = generatedContent.response.text();
-            score = Math.floor(Math.random() * 30) + 70;
-            review = 'This is a placeholder review. Implement your review logic here.';
+            const scoring_prompt = `You are a teacher grading a student's essay. Please grade the essay based on the following criteria:
+- Content: The essay should be well-written and contain relevant information.
+- Organization: The essay should be organized and easy to understand.
+- Grammar: The essay should be grammatically correct.
+- Style: The essay should be written in a clear and engaging style.
+If the essay is out of topic, please give a score under 1.5
+Else gave a score between 1.5 and 2
+Output the score in the format:
+Score: <score>
+Review: <review>
+The topic of the essay is: ${statement}
+The essay is: 
+${responseText}`
+            const generatedScore = await model.generateContent([scoring_prompt]);
+            score = parseInt(generatedScore.response.text().split(':')[1].trim());
+            review = generatedScore.response.text().split('Review:')[1].trim();
             status = 'finished';
         } catch (error) {
             errorMessage = 'Error processing file: ' + (error as Error).message;
@@ -208,8 +222,8 @@
 
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-800 mb-3">Score</h3>
-                    <div class="text-4xl font-bold text-green-600 text-center">
-                        {score || '--'}/100
+                    <div class="text-4xl font-bold text-center" class:text-gray-500={score === 0} class:text-red-600={score < 1 && score !== 0} class:text-green-600={score >= 1}>
+                        {score || '--'}/2.0
                     </div>
                 </div>
 
@@ -249,3 +263,12 @@
         </div>
     </div>
 </div>
+<footer class="w-full border-t mt-auto py-4">
+	<div class="container mx-auto px-4">
+		<div class="text-sm text-muted-foreground text-center">
+			<p>Developed by <a href="https://github.com/mncuchiinhuttt">Vo Minh Long</a></p>
+			<p>© 2025 Unit 9 Assignment. All rights reserved.</p>
+            <p>Source code: <a href="https://github.com/mncuchiinhuttt/unit9assignment/">GitHub</a></p>
+		</div>
+	</div>
+</footer>

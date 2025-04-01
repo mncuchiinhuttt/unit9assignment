@@ -17,7 +17,7 @@
 </script>
  
 <Sidebar.Root>
-  <Sidebar.Content>
+  <Sidebar.Content class="pt-4">
     <Sidebar.Menu class="space-y-1 p-4">
       {#each items as item (item.title)}
         <Sidebar.MenuItem>

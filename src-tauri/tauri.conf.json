@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "unit9assignment",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.unit9assignment.dev",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:5174",
@@ -12,11 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "unit9assignment",
-        "width": 800,
-        "height": 600,
+        "title": "Gay",
+        "width": 1300,
+        "height": 930,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "hiddenTitle": true,
+        "maximizable": false,
+        "minimizable": false,
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {
