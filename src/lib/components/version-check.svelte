@@ -2,8 +2,9 @@
     import { onMount } from 'svelte';
     import { Button } from '$lib/components/ui/button';
     import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '$lib/components/ui/dialog';
+    import { version } from '$lib/app_info.json';
     
-    const CURRENT_VERSION = '1.0.2';
+    const CURRENT_VERSION = version;
 
     let showDialog = $state(false);
     let latestVersion = $state('');
