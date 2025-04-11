@@ -52,6 +52,7 @@
 		]
 	},
 	"dependencies": {
+		"@google/genai": "^0.8.0",
 		"@google/generative-ai": "^0.24.0",
 		"@tauri-apps/api": "^2.4.0",
 		"@tauri-apps/plugin-dialog": "~2",

@@ -4,7 +4,8 @@
     import Input from '$lib/components/ui/input/input.svelte';
     import Label from '$lib/components/ui/label/label.svelte';
     import { saveApiKey, getApiKeys, deleteApiKey, type ApiKey } from '$lib/db';
-    import { Trash2 } from '@lucide/svelte';
+    import { Trash2, Info } from '@lucide/svelte';
+    import * as Dialog from '$lib/components/ui/dialog';
 
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -15,6 +16,7 @@
     let newKeyName = $state('');
     let newKeyValue = $state('');
     let error = $state('');
+    let apiKeyInfoOpen = $state(false);
 
     onMount(async () => {
         await loadApiKeys();
@@ -82,7 +84,16 @@
         <h1 class="text-3xl font-bold mb-8">Settings</h1>
 
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-6">Google AI API Keys</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold">Google AI API Keys</h2>
+                <button 
+                    class="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
+                    onclick={() => apiKeyInfoOpen = true}
+                >
+                    <Info class="h-4 w-4" />
+                    <span>How to get an API key</span>
+                </button>
+            </div>
             
             <div class="grid grid-cols-2 gap-6">
                 <div>
@@ -149,6 +160,59 @@
         </div>
     </div>
 </div>
+
+<!-- Google AI API Key Information Dialog -->
+<Dialog.Root bind:open={apiKeyInfoOpen}>
+    <Dialog.Portal>
+        <Dialog.Overlay />
+        <Dialog.Content class="sm:max-w-[600px]">
+            <Dialog.Header>
+                <Dialog.Title>Getting a Google AI API Key</Dialog.Title>
+                <Dialog.Description>
+                    Follow these steps to create and use a Google AI API key securely.
+                </Dialog.Description>
+            </Dialog.Header>
+            
+            <div class="space-y-4 my-6 text-sm">
+                <div>
+                    <h3 class="font-semibold text-base mb-2">Step 1: Accept the AI Studio Terms and Privacy Policy</h3>
+                    <ol class="list-decimal pl-5 space-y-1">
+                        <li>Go to the <a href="https://aistudio.google.com/u/4/apikey?pli=1" target="_blank" class="text-blue-600 hover:underline">Google AI Studio API Key Page</a></li>
+                        <li>Create a new API key</li>
+                        <li>Copy your API Key (The API key is the random string such as 'AIzaS...')</li>
+                    </ol>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-base mb-2">Step 2: Copy and paste to the app</h3>
+                    <ol class="list-decimal pl-5 space-y-1">
+                        <li>If it not working go to Google AI Studio in step 1 and try again with new API key</li>
+                    </ol>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-base mb-2">Step 3: Secure Your API Key</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Restrict your API key to the specific Google AI APIs you need</li>
+                        <li>Consider adding application or IP address restrictions</li>
+                        <li>Never expose your API key in client-side code</li>
+                        <li>Treat API keys like passwords - store securely and rotate regularly</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <p class="font-medium">Important Security Note:</p>
+                    <p>When you use API keys in your applications, ensure they are kept secure during both storage and transmission. Publicly exposing your API keys can lead to unexpected charges on your account.</p>
+                    <p class="mt-2">For more information, see <a href="https://cloud.google.com/docs/authentication/getting-started" target="_blank" class="text-blue-600 hover:underline">Google Cloud Authentication documentation</a>.</p>
+                </div>
+            </div>
+            
+            <Dialog.Footer>
+                <Button on:click={() => apiKeyInfoOpen = false}>Got it, thanks!</Button>
+            </Dialog.Footer>
+        </Dialog.Content>
+    </Dialog.Portal>
+</Dialog.Root>
 
 <footer class="w-full border-t mt-auto py-4">
     <div class="container mx-auto px-4">

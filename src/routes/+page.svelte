@@ -27,10 +27,9 @@
     const md = markdownit();
 
     const models = [
-        { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro Experimental' },
+        { id: 'gemini-2.5-pro-preview-03-25', name: 'Gemini 2.5 Pro Preview 03-25' },
+        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
         { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking Experimental' },
-        { id: 'gemini-2.0-flash-001', name: 'Gemini 2.0 Flash' },
-        { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro' },
     ];
 
     onMount(async () => {
